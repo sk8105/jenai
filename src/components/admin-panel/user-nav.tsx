@@ -34,7 +34,7 @@ export function UserNav() {
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="#" alt="Avatar" />
-                  <AvatarFallback className="bg-transparent">JD</AvatarFallback>
+                  <AvatarFallback className="bg-transparent">SK</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>

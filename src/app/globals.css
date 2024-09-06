@@ -33,6 +33,9 @@
       --ring: 240 10% 3.9%;
 
       --radius: 0.5rem;
+
+        /* Add linear gradient as a custom property */
+        /* --side-nav-gradient: #EA738D; */
     }
 
     .dark {
@@ -73,4 +76,9 @@
     body {
       @apply bg-background text-foreground;
     }
+
+    /* Side Navigation styling */
+    /* #side-nav {
+      background: var(--side-nav-gradient);
+    } */
   }

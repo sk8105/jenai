@@ -42,9 +42,9 @@ export function getMenuList(pathname: string): Group[] {
       groupLabel: "",
       menus: [
         {
-          href: "/search",
-          label: "Search",
-          active: pathname.includes("/search"),
+          href: "/chat",
+          label: "Chat",
+          active: pathname.includes("/chat"),
           icon: Search,
           submenus: []
         }

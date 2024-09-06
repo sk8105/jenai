@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { Chat } from '@/components/ui/chat'
 
-import PlaceholderContent from "@/components/demo/placeholder-content";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
   Breadcrumb,
@@ -13,7 +13,7 @@ import {
 
 export default function AccountPage() {
   return (
-    <ContentLayout title="Search">
+    <ContentLayout title="Chat">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -29,10 +29,11 @@ export default function AccountPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Search</BreadcrumbPage>
+            <BreadcrumbPage>Chat</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <Chat />
     </ContentLayout>
   );
 }
