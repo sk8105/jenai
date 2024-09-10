@@ -42,10 +42,10 @@ export function getMenuList(pathname: string): Group[] {
       groupLabel: "",
       menus: [
         {
-          href: "/chat",
-          label: "Chat",
-          active: pathname.includes("/chat"),
-          icon: Search,
+          href: "/file-upload",
+          label: "Files",
+          active: pathname.includes("/file-upload"),
+          icon: FileUp,
           submenus: []
         }
       ]
@@ -54,10 +54,10 @@ export function getMenuList(pathname: string): Group[] {
       groupLabel: "",
       menus: [
         {
-          href: "/file-upload",
-          label: "Files",
-          active: pathname.includes("/file-upload"),
-          icon: FileUp,
+          href: "/chat",
+          label: "Chat",
+          active: pathname.includes("/chat"),
+          icon: Search,
           submenus: []
         }
       ]

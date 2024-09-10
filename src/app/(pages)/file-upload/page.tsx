@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import PlaceholderContent from "@/components/demo/placeholder-content";
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
   Breadcrumb,
@@ -10,10 +9,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-export default function DashboardPage() {
+export default function CategoriesPage() {
   return (
-    <ContentLayout title="Dashboard">
+    <ContentLayout title="File Upload">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -23,10 +24,20 @@ export default function DashboardPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            <BreadcrumbLink asChild>
+              <Link href="/dashboard">Dashboard</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>File Upload</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <div className="grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="file">Select files from local</Label>
+        <Input id="file" type="file" />
+      </div>
     </ContentLayout>
   );
 }

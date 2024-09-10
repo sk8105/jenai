@@ -13,7 +13,7 @@ export const metadata: Metadata = {
       ? `https://${process.env.VERCEL_URL}`
       : `http://localhost:${process.env.PORT || 3000}`
   ),
-  title: "JEN AI"
+  title: "InsightVector"
 };
 
 export default function RootLayout({

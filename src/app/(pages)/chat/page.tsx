@@ -33,6 +33,7 @@ export default function AccountPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <br/>
       <Chat />
     </ContentLayout>
   );

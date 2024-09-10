@@ -3,16 +3,14 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useChat } from "ai/react";
 import { ScrollArea } from "./scroll-area";
+import { SendHorizontal } from "lucide-react";
 
 export function Chat() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
@@ -22,7 +20,7 @@ export function Chat() {
   return (
     <Card>
       <CardContent>
-        <ScrollArea className="h-[430px] w-full pr-4">
+        <ScrollArea className="min-h-[calc(75vh_-_56px)] w-full pr-4">
           {messages.map((message) => {
             return (
               <div
@@ -59,7 +57,7 @@ export function Chat() {
             value={input}
             onChange={handleInputChange}
           />
-          <Button type="submit">Send</Button>
+          <Button type="submit"><SendHorizontal/></Button>
         </form>
       </CardFooter>
     </Card>
