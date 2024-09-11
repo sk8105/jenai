@@ -5,6 +5,7 @@ import { Ellipsis, LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import { signOut } from "@/services/auth";
 import { getMenuList } from "@/lib/menu-list";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -115,7 +116,7 @@ export function Menu({ isOpen }: MenuProps) {
                     <span className={cn(isOpen === false ? "" : "mr-4")}>
                       <LogOut size={18} />
                     </span>
-                    <p
+                    <p onClick={signOut}
                       className={cn(
                         "whitespace-nowrap",
                         isOpen === false ? "opacity-0 hidden" : "opacity-100"

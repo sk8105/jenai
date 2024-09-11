@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from "next/link";
+import { signOut } from "@/services/auth"
 import { LayoutGrid, LogOut, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,8 +22,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { getUserDetails } from "@/lib/cookies";
 
 export function UserNav() {
+  const [user, setUser] = useState<{ email: string, name: string } | null>(null);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        // Assuming getCookie is async
+        const userCookie = await getUserDetails();
+        if (userCookie) {
+          // Ensure the result is a string
+          if (userCookie && userCookie.email) {
+            const email = userCookie.email;
+            const name = email.split('@')[0];
+            setUser({ email, name });
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing user cookie:', error);
+      }
+    }
+
+    fetchUserData();
+  }, []);
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <TooltipProvider disableHoverableContent>
@@ -34,7 +64,9 @@ export function UserNav() {
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="#" alt="Avatar" />
-                  <AvatarFallback className="bg-transparent">SK</AvatarFallback>
+                  <AvatarFallback className="bg-transparent">
+                    {user.name?.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -46,9 +78,9 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Sathish</p>
+            <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              Sathishkumar@jmangroup.com
+              {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -62,7 +94,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="hover:cursor-pointer" onClick={() => {}}>
+        <DropdownMenuItem className="hover:cursor-pointer" onClick={signOut}>
           <LogOut className="w-4 h-4 mr-3 text-muted-foreground" />
           Sign out
         </DropdownMenuItem>

@@ -1,25 +1,57 @@
-"use client"
+"use client";
 
 import * as React from "react";
-
+import { loginUser } from "@/services/auth";
+import { setAuthDetails } from "../../lib/cookies";
+import { validateEmail } from "../../lib/validation";
 import { cn } from "@/lib/utils";
-import { Icons } from "../ui/icon"
+import { Icons } from "../ui/icon";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
-  const [isLoading, setIsLoading] = React.useState<boolean>(false)
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [email, setEmail] = React.useState<string>("");
+  const [password, setPassword] = React.useState<string>("");
 
   async function onSubmit(event: React.SyntheticEvent) {
-    event.preventDefault()
-    setIsLoading(true)
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
+    // Validate email format
+    if (!validateEmail(email)) {
+      setError("Invalid email format");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Call the loginUser function to hit your backend API
+      const { token, user } = await loginUser(email, password);
+
+      // Check if token and user are properly returned
+      if (token && user) {
+        // Store JWT token and user details in cookies
+        setAuthDetails(token, user);
+
+        // Ensure cookies are set before redirecting
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 100);
+      } else {
+        throw new Error("Login failed");
+      }
+    } catch (error: any) {
+      // Handle login failure and set error message
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -37,18 +69,26 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect="off"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
             />
+            <Label className="sr-only" htmlFor="password">
+              Password
+            </Label>
             <Input
               id="password"
-              placeholder="enter password"
+              placeholder="Enter password"
               type="password"
               autoCapitalize="none"
               autoComplete="password"
               autoCorrect="off"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
             />
           </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button disabled={isLoading}>
             {isLoading && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
@@ -71,10 +111,10 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         {isLoading ? (
           <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <Icons.gitHub className="mr-2 h-4 w-4" />
+          <Icons.microsoftSSO className="mr-2 h-4 w-4" />
         )}{" "}
-        GitHub
+        Microsoft
       </Button>
     </div>
-  )
+  );
 }

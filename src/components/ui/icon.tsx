@@ -105,6 +105,14 @@ export const Icons = {
       />
     </svg>
   ),
+  microsoftSSO: (props: IconProps) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+      <rect width="12" height="12" x="1" y="1" fill="#F25022" />
+      <rect width="12" height="12" x="1" y="13" fill="#00A4EF" />
+      <rect width="12" height="12" x="13" y="1" fill="#7FBA00" />
+      <rect width="12" height="12" x="13" y="13" fill="#FFB900" />
+    </svg>
+  ),
   google: (props: IconProps) => (
     <svg role="img" viewBox="0 0 24 24" {...props}>
       <path

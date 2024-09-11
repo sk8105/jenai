@@ -9,8 +9,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
+import ImageUpload from "../../../components/admin-panel/image-upload";
 
 export default function CategoriesPage() {
   return (
@@ -34,9 +35,17 @@ export default function CategoriesPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="file">Select files from local</Label>
-        <Input id="file" type="file" />
+      <div className="flex gap-4">
+        <div>
+          <div className="grid gap-12 py-12">
+            <ImageUpload />
+          </div>
+          <div className="text-center">
+            <Button>
+              File upload
+            </Button>
+          </div>
+        </div>
       </div>
     </ContentLayout>
   );
