@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
+import Dashboard from "@/components/admin-panel/dashboard-card";
 
 export default function DashboardPage() {
   return (
@@ -26,6 +27,7 @@ export default function DashboardPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <Dashboard/>
     </ContentLayout>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Chat } from '@/components/ui/chat'
+import ChatUI from '@/components/admin-panel/chat-ui'
 
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import {
@@ -34,7 +34,7 @@ export default function AccountPage() {
         </BreadcrumbList>
       </Breadcrumb>
       <br/>
-      <Chat />
+      <ChatUI />
     </ContentLayout>
   );
 }

@@ -1,7 +1,7 @@
 import {
   LucideIcon,
   FileUp,
-  Search,
+  BotMessageSquare,
   LayoutDashboard
 } from "lucide-react";
 
@@ -57,7 +57,7 @@ export function getMenuList(pathname: string): Group[] {
           href: "/chat",
           label: "Chat",
           active: pathname.includes("/chat"),
-          icon: Search,
+          icon: BotMessageSquare,
           submenus: []
         }
       ]

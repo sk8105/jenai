@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { UserAuthForm } from "../../../components/admin-panel/user-auth-form";
+import { Card } from "../../../components/ui/card";
 
 export const metadata: Metadata = {
   title: "Authentication",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AuthenticationPage() {
   return (
-    <>
+    <Card>
       <div className="flex flex-col p-4 lg:w-1/3">
         <div className="lg:p-8">
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
@@ -27,6 +28,6 @@ export default function AuthenticationPage() {
           </div>
         </div>
       </div>
-    </>
+    </Card>
   )
 }

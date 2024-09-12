@@ -15,5 +15,5 @@ export function middleware(request: NextRequest) {
   }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/file-upload/:path*', '/chat/:path*' , '/login', '/'],
+    matcher: ['/dashboard/:path*', '/file-upload/:path*', '/chat/:path*' , '/login'],
 };
