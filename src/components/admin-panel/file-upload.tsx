@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Upload, FileSpreadsheet, FileText, FileType, X, Edit, Trash2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { uploadFiles, fetchFiles, deleteFile } from '@/services/file';
 
 type FileTypes = 'excel' | 'csv' | 'pdf'
 
@@ -58,26 +59,22 @@ interface RecentUpload {
 }
 
 export default function FileUploader() {
-  const [file, setFile] = useState<File | null>(null)
-  const [fileType, setFileType] = useState<FileTypes>('excel')
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadSpeed, setUploadSpeed] = useState(0)
-  const [isUploading, setIsUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const { toast } = useToast()
+  const [file, setFile] = useState<File | null>(null);
+  const [fileType, setFileType] = useState<FileTypes>('excel');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadSpeed, setUploadSpeed] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
-  const [recentUploads, setRecentUploads] = useState<RecentUpload[]>([
-    { id: '1', name: 'Sales Report.xlsx', type: 'excel', date: '2023-06-01' },
-    { id: '2', name: 'Customer Data.csv', type: 'csv', date: '2023-05-28' },
-    { id: '3', name: 'Contract.pdf', type: 'pdf', date: '2023-05-25' },
-  ])
+  const [recentUploads, setRecentUploads] = useState<RecentUpload[]>([]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0]
     if (selectedFile) {
       setFile(selectedFile)
     }
-  }
+  };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -85,49 +82,52 @@ export default function FileUploader() {
     if (droppedFile) {
       setFile(droppedFile)
     }
-  }
+  };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
-  }
+  };
 
-  const simulateUpload = () => {
-    setIsUploading(true)
-    setUploadProgress(0)
-    setUploadSpeed(0)
+  const simulateUpload = async () => {
+    if (file) {
+      setIsUploading(true)
+      setUploadProgress(0)
+      setUploadSpeed(0)
 
-    const totalSize = file?.size || 1
-    let uploadedSize = 0
-    const startTime = Date.now()
+      const totalSize = file?.size || 1
+      let uploadedSize = 0
+      const startTime = Date.now()
+      const response = await uploadFiles(file)
 
-    const interval = setInterval(() => {
-      uploadedSize += 1024 * 1024 // Simulate 1MB per interval
-      const progress = Math.min((uploadedSize / totalSize) * 100, 100)
-      setUploadProgress(progress)
+      const interval = setInterval(() => {
+        uploadedSize += 1024 * 1024 // Simulate 1MB per interval
+        const progress = Math.min((uploadedSize / totalSize) * 100, 100)
+        setUploadProgress(progress)
 
-      const elapsedTime = (Date.now() - startTime) / 1000 // in seconds
-      const speed = uploadedSize / elapsedTime / 1024 / 1024 // in MB/s
-      setUploadSpeed(speed)
+        const elapsedTime = (Date.now() - startTime) / 1000 // in seconds
+        const speed = uploadedSize / elapsedTime / 1024 / 1024 // in MB/s
+        setUploadSpeed(speed)
 
-      if (progress === 100) {
-        clearInterval(interval)
-        setIsUploading(false)
-        toast({
-          title: "Upload Complete",
-          description: "Your file has been successfully uploaded.",
-        })
-        if (file) {
-          const newUpload: RecentUpload = {
-            id: Date.now().toString(),
-            name: file.name,
-            type: fileType,
-            date: new Date().toISOString().split('T')[0]
+        if (progress === 100) {
+          clearInterval(interval)
+          setIsUploading(false)
+          toast({
+            title: "Upload Complete",
+            description: "Your file has been successfully uploaded.",
+          })
+          if (file) {
+            const newUpload: RecentUpload = {
+              id: Date.now().toString(),
+              name: file.name,
+              type: fileType,
+              date: new Date().toISOString().split('T')[0]
+            }
+            setRecentUploads(prev => [newUpload, ...prev])
           }
-          setRecentUploads(prev => [newUpload, ...prev])
         }
-      }
-    }, 100)
-  }
+      }, 100)
+    }
+  };
 
   const handleUpload = () => {
     if (file) {
@@ -139,31 +139,67 @@ export default function FileUploader() {
         variant: "destructive",
       })
     }
-  }
+  };
 
   const clearFile = () => {
     setFile(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }
+  };
 
-  const handleEdit = (id: string) => {
-    toast({
-      title: "Edit Requested",
-      description: `Edit requested for file with ID: ${id}`,
-    })
-  }
-
-  const handleDelete = (id: string) => {
-    setRecentUploads(prev => prev.filter(upload => upload.id !== id))
-    toast({
-      title: "File Deleted",
-      description: "The file has been removed from recent uploads.",
-    })
-  }
+  const handleDelete = async (id: string) => {
+    try {
+      // Call the deleteFile API
+      await deleteFile(id);
+  
+      // Update the state to remove the file from the list
+      setRecentUploads(prev => prev.filter(upload => upload.id !== id));
+  
+      // Show success toast
+      toast({
+        title: "File Deleted",
+        description: "The file has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting file:', error);
+  
+      // Show error toast
+      toast({
+        title: "Delete Failed",
+        description: "An error occurred while trying to delete the file.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const FileIcon = fileTypeInfo[fileType].icon
+
+  // Fetch file details from API
+  useEffect(() => {
+    const getFiles = async () => {
+      try {
+        const response = await fetchFiles();
+
+        if (response.success) {
+          const formattedData = response.data.map((file: any) => {
+            return {
+              id: file.id,
+              name: file.file_name,
+              date: new Date(file.uploaded_at * 1000).toISOString().split('T')[0],
+              type: 'pdf',
+            };
+          });
+          setRecentUploads(formattedData);
+        }
+      } catch (error) {
+        console.error('Error fetching files:', error);
+      }
+    };
+
+    getFiles();
+  }, []);
+
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 flex flex-col md:flex-row gap-6">

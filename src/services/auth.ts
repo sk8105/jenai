@@ -5,7 +5,7 @@ import { removeAuthDetails } from "../lib/cookies";
 export const loginUser = async (email: string, password: string) => {
   try {
     const response = await axios.post(
-      'https://cu4k2opuzs5je5i3bq5v5sj7li0gamjd.lambda-url.eu-west-2.on.aws/api/auth/login',
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
       { email, password }
     );
 
