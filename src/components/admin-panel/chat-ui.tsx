@@ -1,17 +1,20 @@
-"use client"
+'use client'
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
-import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { PlusCircle, Send, Upload, X } from "lucide-react"
+import { PlusCircle, Send, Upload, X, Edit, Trash, Copy, Check, Loader2 } from "lucide-react"
+import { sendChatQuery } from '@/services/chat'
+import { useToast } from "@/components/ui/use-toast"
+import { Skeleton } from "@/components/ui/skeleton"
+import { SunSnow, UserSearch } from "lucide-react";
 
 type Message = {
+  id: string
   role: "user" | "assistant"
   content: string
 }
@@ -20,40 +23,75 @@ type Conversation = {
   id: number
   title: string
   messages: Message[]
+  inputMessage: string
+  uploadedFile: File | null
 }
 
 export default function ChatUI() {
   const [conversations, setConversations] = useState<Conversation[]>([
     {
       id: 1,
-      title: "React Hooks Discussion",
+      title: "How can I assist you today",
       messages: [
-        { role: "assistant", content: "Hello! How can I assist you today?" },
-        { role: "user", content: "Hi there! I have a question about React hooks." },
-        { role: "assistant", content: "Sure, I'd be happy to help with React hooks. What specific question do you have?" },
+        { id: "1", role: "assistant", content: "Hello! How can I assist you today?" },
       ],
-    },
+      inputMessage: "",
+      uploadedFile: null
+    }
   ])
   const [selectedConversation, setSelectedConversation] = useState<number>(1)
-  const [inputMessage, setInputMessage] = useState("")
-  const [selectedModel, setSelectedModel] = useState("llama-6.7b")
+  const [selectedModel, setSelectedModel] = useState("llama-3")
   const [accuracy, setAccuracy] = useState(0.7)
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const chatScrollAreaRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim()) {
+  useEffect(() => {
+    if (chatScrollAreaRef.current) {
+      chatScrollAreaRef.current.scrollTop = chatScrollAreaRef.current.scrollHeight
+    }
+  }, [conversations])
+
+  const handleSendMessage = async () => {
+    const currentConversation = conversations.find(conv => conv.id === selectedConversation)
+    if (!currentConversation) return
+
+    if (currentConversation.inputMessage.trim() || currentConversation.uploadedFile) {
+      setIsLoading(true)
       setConversations(prevConversations => {
         return prevConversations.map(conv => {
           if (conv.id === selectedConversation) {
-            const updatedMessages = [...conv.messages, { role: "user", content: inputMessage }]
-            const updatedTitle = conv.messages.length === 0 ? getConversationTitle(inputMessage) : conv.title
-            return { ...conv, messages: updatedMessages, title: updatedTitle }
+            const newMessage: Message = { id: Date.now().toString(), role: "user", content: conv.inputMessage };
+            const updatedMessages = [...conv.messages, newMessage];
+            const updatedTitle = conv.messages.length === 0 ? getConversationTitle(conv.inputMessage) : conv.title;
+            return { ...conv, messages: updatedMessages, title: updatedTitle, inputMessage: "", uploadedFile: null };
           }
-          return conv
-        })
-      })
-      setInputMessage("")
-      // Here you would typically send the message to your AI backend and handle the response
+          return conv;
+        });
+      });
+
+      try {
+        const response = await sendChatQuery(currentConversation.inputMessage);
+        if (response.success) {
+          const assistantMessage: Message = { id: Date.now().toString(), role: "assistant", content: response.data };
+          setConversations(prevConversations => {
+            return prevConversations.map(conv => {
+              if (conv.id === selectedConversation) {
+                return { ...conv, messages: [...conv.messages, assistantMessage] };
+              }
+              return conv;
+            });
+          });
+        } else {
+          console.error("API response was not successful:", response);
+        }
+      } catch (error) {
+        console.error("Error fetching assistant response:", error);
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -68,6 +106,8 @@ export default function ChatUI() {
       id: newId,
       title: "New Conversation",
       messages: [],
+      inputMessage: "",
+      uploadedFile: null
     }
     setConversations([...conversations, newConversation])
     setSelectedConversation(newId)
@@ -83,17 +123,81 @@ export default function ChatUI() {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setUploadedFile(file)
-      // Here you would typically handle the file upload to your backend
+      setConversations(prevConversations => {
+        return prevConversations.map(conv => {
+          if (conv.id === selectedConversation) {
+            return { ...conv, uploadedFile: file };
+          }
+          return conv;
+        });
+      });
+      toast({
+        title: "File uploaded",
+        description: `${file.name} has been uploaded successfully.`,
+      })
     }
   }
 
+  const handleClearFile = () => {
+    setConversations(prevConversations => {
+      return prevConversations.map(conv => {
+        if (conv.id === selectedConversation) {
+          return { ...conv, uploadedFile: null };
+        }
+        return conv;
+      });
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleEditMessage = (messageId: string) => {
+    console.log("Edit message:", messageId)
+  }
+
+  const handleDeleteMessage = (messageId: string) => {
+    setConversations(prevConversations => {
+      return prevConversations.map(conv => {
+        if (conv.id === selectedConversation) {
+          return {
+            ...conv,
+            messages: conv.messages.filter(msg => msg.id !== messageId)
+          }
+        }
+        return conv
+      })
+    })
+  }
+
+  const handleCopyMessage = (messageId: string, content: string) => {
+    navigator.clipboard.writeText(content)
+    setCopiedMessageId(messageId)
+    setTimeout(() => setCopiedMessageId(null), 2000)
+  }
+
+  const handleInputChange = (value: string) => {
+    setConversations(prevConversations => {
+      return prevConversations.map(conv => {
+        if (conv.id === selectedConversation) {
+          return { ...conv, inputMessage: value };
+        }
+        return conv;
+      });
+    });
+  }
+
+  const currentConversation = conversations.find(conv => conv.id === selectedConversation)
+
   return (
-    <div className="flex flex-col h-full rounded-lg shadow-lg">
-      {/* Chat Header with Settings and New Conversation Button */}
-      <div className="border-b border-gray-200 p-4 space-y-4">
+    <div className="flex flex-col h-screen rounded-lg overflow-hidden">
+      <div className="border-b p-4 backdrop-blur-sm z-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4">
+          <Button onClick={handleNewConversation} variant="outline" size="sm">
+            <PlusCircle className="w-4 h-4 mr-2" />
+            New Conversation
+          </Button>
+          <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Label htmlFor="model-select" className="text-sm font-medium">
                 Model:
@@ -103,10 +207,8 @@ export default function ChatUI() {
                   <SelectValue placeholder="Select Model" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="llama-6.7b">LLaMA 6.7B</SelectItem>
-                  <SelectItem value="llama-13b">LLaMA 13B</SelectItem>
-                  <SelectItem value="llama-32.5b">LLaMA 32.5B</SelectItem>
-                  <SelectItem value="llama-65.7b">LLaMA 65.2B</SelectItem>
+                  <SelectItem value="llama-3">Llama 3</SelectItem>
+                  <SelectItem value="llama-3-1">Llama 3.1</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -125,98 +227,151 @@ export default function ChatUI() {
               />
               <span className="text-sm font-medium">{accuracy.toFixed(1)}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="file-upload" className="text-sm font-medium cursor-pointer">
-                <Upload className="w-4 h-4 mr-2 inline-block" />
-                Upload
-              </Label>
-              <Input id="file-upload" type="file" className="hidden" onChange={handleFileUpload} />
-              {uploadedFile && <span className="text-sm text-gray-600">{uploadedFile.name}</span>}
-            </div>
           </div>
-          <Button onClick={handleNewConversation} variant="outline" size="sm">
-            <PlusCircle className="w-4 h-4 mr-2" />
-            New Conversation
-          </Button>
         </div>
       </div>
 
-      {/* Conversation History */}
-      <ScrollArea className="border-b border-gray-200 p-2 h-16">
-        <div className="flex space-x-2">
+      <ScrollArea className="border-b p-2 backdrop-blur-sm">
+        <div className="flex space-x-2 pb-2">
           {conversations.map((conv) => (
-            <div key={conv.id} className="flex items-center">
-              <Button
-                variant={selectedConversation === conv.id ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setSelectedConversation(conv.id)}
-                className="text-left truncate max-w-[150px]"
-              >
-                {conv.title}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleRemoveConversation(conv.id)}
-                className="ml-1 p-0 h-6 w-6"
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Remove conversation</span>
-              </Button>
-            </div>
+            <Button
+              key={conv.id}
+              variant={selectedConversation === conv.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedConversation(conv.id)}
+              className="whitespace-nowrap"
+            >
+              {conv.title}
+              {conversations.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRemoveConversation(conv.id)
+                  }}
+                  className="ml-2 h-5 w-5 p-0 rounded-full"
+                >
+                  <X className="h-3 w-3" />
+                  <span className="sr-only">Remove conversation</span>
+                </Button>
+              )}
+            </Button>
           ))}
         </div>
       </ScrollArea>
 
-      {/* Chat Messages */}
-      <ScrollArea className="flex-grow p-4 space-y-4">
-        {conversations
-          .find((conv) => conv.id === selectedConversation)
-          ?.messages.map((msg, index) => (
-            <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className="flex items-start space-x-2 max-w-[70%]">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage
-                    src={
-                      msg.role === "user"
-                        ? "/placeholder-user.jpg"
-                        : "https://api.dicebear.com/6.x/bottts/svg?seed=assistant"
-                    }
-                  />
-                  <AvatarFallback>{msg.role === "user" ? "CA" : "A"}</AvatarFallback>
-                </Avatar>
-                <div
-                  className={`p-3 rounded-lg ${
-                    msg.role === "user" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-                  }`}
-                >
+      <div className="flex-grow overflow-hidden relative max-h-[50vh]">
+        <ScrollArea className="h-full p-4 space-y-6" ref={chatScrollAreaRef}>
+          {currentConversation?.messages.map((msg) => (
+            <div key={msg.id} className="flex items-start space-x-4 group">
+              <Avatar className="w-10 h-10 mt-1 flex-shrink-0">
+                {isLoading && msg.role === "assistant" ? (
+                  <div className="w-10 h-10 flex items-center justify-center rounded-full">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    {msg.role === "user" ? (
+                      <UserSearch className="w-6 h-6 mr-1"/>
+                    ) : (
+                      <SunSnow className="w-6 h-6 mr-1" />
+                    )}
+                  </div>
+                )}
+              </Avatar> 
+              <div className="flex-grow">
+                <div className="rounded-lg backdrop-blur-sm p-4">
                   {msg.content}
                 </div>
               </div>
+              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {msg.role === "user" && (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={() => handleEditMessage(msg.id)} className="h-8 w-8 p-0 rounded-full">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteMessage(msg.id)} className="h-8 w-8 p-0 rounded-full">
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCopyMessage(msg.id, msg.content)}
+                  className="h-8 w-8 p-0 rounded-full"
+                >
+                  {copiedMessageId === msg.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           ))}
-      </ScrollArea>
+          {isLoading && (
+            <div className="flex items-start space-x-4">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <div className="flex-grow space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            </div>
+          )}
+        </ScrollArea>
+      </div>
 
-      {/* Input Area */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="relative">
-          <Textarea
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
+      <div className="border-t p-4 backdrop-blur-sm">
+        <div className="relative flex items-center">
+          <textarea
+            value={currentConversation?.inputMessage || ""}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Type your message here..."
-            className="pr-12 resize-none"
-            rows={3}
+            className="flex-grow pr-24 py-3 px-4 resize-none border rounded-md"
+            rows={1}
+            disabled={isLoading}
           />
-          <Button
-            onClick={handleSendMessage}
-            size="icon"
-            className="absolute right-2 bottom-2"
-            disabled={!inputMessage.trim()}
-          >
-            <Send className="w-4 h-4" />
-            <span className="sr-only">Send message</span>
-          </Button>
+          <div className="absolute right-2 bottom-2 flex space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              className="h-8 w-8 p-0 rounded-full"
+              disabled={isLoading}
+            >
+              {currentConversation?.uploadedFile ? <Check className="h-4 w-4 text-green-500" /> : <Upload className="h-4 w-4" />}
+              <span className="sr-only">Upload file</span>
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              size="icon"
+              className="h-8 w-8 p-0 rounded-full"
+              disabled={isLoading || (!currentConversation?.inputMessage.trim() && !currentConversation?.uploadedFile)}
+            >
+              <Send className="h-4 w-4" />
+              <span className="sr-only">Send message</span>
+            </Button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
         </div>
+        {currentConversation?.uploadedFile && (
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-sm text-gray-600">
+              Uploaded: {currentConversation.uploadedFile.name}
+            </span>
+            <div className="space-x-2">
+              <Button onClick={handleSendMessage} size="sm" variant="outline">
+                Submit
+              </Button>
+              <Button onClick={handleClearFile} size="sm" variant="outline">
+                Clear
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

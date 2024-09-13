@@ -7,9 +7,9 @@ export const setAuthDetails = (token: string, user: any) => {
   const cookieStore = cookies();
   
   // Set token with an expiry of 10 minutes
-  cookieStore.set('token', token, { expires: new Date(Date.now() + 10 * 60 * 1000), path: '/' }); // 10 minutes from now
+  cookieStore.set('token', token, { expires: new Date(Date.now() + 30 * 60 * 1000), path: '/' }); // 30 minutes from now
   // Store user details
-  cookieStore.set('user', JSON.stringify(user), { expires: new Date(Date.now() + 10 * 60 * 1000), path: '/' }); // 10 minutes from now
+  cookieStore.set('user', JSON.stringify(user), { expires: new Date(Date.now() + 30 * 60 * 1000), path: '/' }); // 30 minutes from now
 };
 
 // Function to get JWT token from cookies (Server-side only)
